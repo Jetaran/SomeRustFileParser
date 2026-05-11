@@ -1,0 +1,10 @@
+[package]
+name = "parser"
+version = "0.1.0"
+edition = "2024"
+description = "Короткое описание"
+authors = ["Константин Кулаков <avatar85@yandex.ru>"]
+license = "MIT"
+repository = "https://github.com/Jetaran/SomeRustFileParser"
+
+[dependencies]
