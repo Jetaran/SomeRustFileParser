@@ -1,6 +1,8 @@
-use std::io::{BufRead, BufReader, Read};
-use crate::errors::ParseError;
+use std::io::{BufRead, BufReader, Read, Write};
+use crate::errors::{ParseError, WriteError};
 use crate::TransactionRecord;
+
+// READ
 
 /// Парсит csv-строку и собирает структуру через замыкание-адаптер (аналог питонячей yield-лямбды)
 fn parse_line(line: String) -> Result<TransactionRecord, ParseError> {
@@ -36,9 +38,29 @@ pub(crate) fn parse_csv_to_transactions<R: Read>(content: R) -> Result<Vec<Trans
     Ok(transaction_records)
 }
 
+// WRITE
+
+pub(crate) fn write_csv<W: Write>(transactions: Vec<TransactionRecord>, writer: &mut W) -> Result<(), WriteError> {
+    for transaction in transactions {
+        writeln!(
+            writer,
+            "{},{},{},{},{},{},{},{}",
+            transaction.tx_id,
+            transaction.tx_type,
+            transaction.from_user_id,
+            transaction.to_user_id,
+            transaction.amount,
+            transaction.timestamp,
+            transaction.status,
+            transaction.description
+        )?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::io::{BufWriter, Cursor};
     use crate::{TransactionStatus, TransactionType};
     use super::*;
 
@@ -123,5 +145,24 @@ mod tests {
             Err(other) => panic!("Ожидалась InvalidLine, получено: {:?}", other),
             Ok(_) => panic!("Ожидалась ошибка, но парсинг прошёл успешно"),
         }
+    }
+    #[test]
+    fn write_parsed_files_to_csv_success() {
+        let fake_file = concat!(
+        "1000000000000009,DEPOSIT,0,9223372036854775807,1000,1633037400000,FAILURE,", r#""Record number 10""#, "\n",
+        "1000000000000994,TRANSFER,9223372036854775807,9223372036854775807,99500,1633096500000,PENDING,", r#""Record number 995""#, "\n"
+        );
+        let reader = Cursor::new(fake_file.as_bytes());
+        let records = parse_csv_to_transactions(reader).unwrap();
+        let mut buffer = Vec::new();
+        // writer заимствует буфер, но дальше уже не нужен
+        {
+            let mut writer = BufWriter::new(&mut buffer);
+            write_csv(records, &mut writer).unwrap();
+            writer.flush().unwrap();
+        }
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert_eq!(output, fake_file);
     }
 }

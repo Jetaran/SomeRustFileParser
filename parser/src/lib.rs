@@ -1,8 +1,10 @@
+use std::fmt::Display;
 use std::fs::File;
+use std::io::{BufWriter, Read, Write};
 use std::str::FromStr;
 use crate::bin_format::parse_bin_to_transaction;
-use crate::csv_format::parse_csv_to_transactions;
-use crate::errors::InputError;
+use crate::csv_format::{parse_csv_to_transactions, write_csv};
+use crate::errors::{InputError, WriteError};
 use crate::txt_format::parse_txt_to_transactions;
 
 mod errors;
@@ -64,6 +66,15 @@ impl FromStr for TransactionType {
         }
     }
 }
+impl Display for TransactionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::DEPOSIT => f.write_str("DEPOSIT"),
+            Self::WITHDRAWAL => f.write_str("WITHDRAWAL"),
+            Self::TRANSFER => f.write_str("TRANSFER"),
+        }
+    }
+}
 impl FromStr for TransactionStatus {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -72,6 +83,15 @@ impl FromStr for TransactionStatus {
             "FAILURE" => Ok(Self::FAILURE),
             "PENDING" => Ok(Self::PENDING),
             _ => Err(format!("Unknown TransactionStatus: {}", s)),
+        }
+    }
+}
+impl Display for TransactionStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::SUCCESS => f.write_str("SUCCESS"),
+            Self::FAILURE => f.write_str("FAILURE"),
+            Self::PENDING => f.write_str("PENDING"),
         }
     }
 }
@@ -104,24 +124,66 @@ impl Parser {
         }
     }
 
-    fn parse_transactions_from_txt(self, file: File) -> Vec<TransactionRecord> {
+    fn parse_transactions_from_txt<R: Read>(self, file: R) -> Vec<TransactionRecord> {
         println!("Парсим Транзакции из txt-файла...");
         match parse_txt_to_transactions(file) {
             Ok(transactions) => transactions,
             Err(e) => panic!("{}", e)
         }
     }
-    fn parse_transactions_from_csv(self, file: File) -> Vec<TransactionRecord> {
+    fn parse_transactions_from_csv<R: Read>(self, file: R) -> Vec<TransactionRecord> {
         println!("Парсим Транзакции из csv-файла...");
         match parse_csv_to_transactions(file) {
             Ok(transactions) => transactions,
             Err(e) => panic!("{}", e)
         }
     }
-    fn parse_transactions_from_bin(self, file: File) -> Vec<TransactionRecord> {
+    fn parse_transactions_from_bin<R: Read>(self, file: R) -> Vec<TransactionRecord> {
         println!("Парсим Транзакции из bin-файла...");
         match parse_bin_to_transaction(file) {
             Ok(transactions) => transactions,
+            Err(e) => panic!("{}", e)
+        }
+    }
+    pub fn write_to_file(self, output_file_name: &str, transactions: Vec<TransactionRecord>) -> Result<(), WriteError> {
+        let file = File::create(output_file_name)?;
+        let writer: Result<_, WriteError> = Ok(BufWriter::new(file));
+        match writer {
+            Ok(writer) => {
+                let file_name_vec = output_file_name.splitn(2, ".").collect::<Vec<_>>();
+                if let [_, format] = file_name_vec.as_slice() {
+                    match format {
+                        &"txt" => Ok(self.write_transactions_to_txt(transactions, writer)),
+                        &"csv" => Ok(self.write_transactions_to_csv(transactions, writer)),
+                        &"bin" => Ok(self.write_transactions_to_bin(transactions, writer)),
+                        _ => Err(WriteError::InputError(InputError::InvalidFormat { expected: FORMATS.join(", ") })),
+                    }?;
+                } else {
+                    return Err(WriteError::InputError(InputError::InvalidName(output_file_name.to_string())));
+                }
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+    fn write_transactions_to_txt<W: Write>(self, transactions: Vec<TransactionRecord>, mut file: W) {
+        println!("Записываем Транзакции в txt-файл...");
+        match write_csv(transactions, &mut file) {
+            Ok(_) => (),
+            Err(e) => panic!("{}", e)
+        }
+    }
+    fn write_transactions_to_csv<W: Write>(self, transactions: Vec<TransactionRecord>, mut file: W) {
+        println!("Записываем Транзакции в csv-файл...");
+        match write_csv(transactions, &mut file) {
+            Ok(_) => (),
+            Err(e) => panic!("{}", e)
+        }
+    }
+    fn write_transactions_to_bin<W: Write>(self, transactions: Vec<TransactionRecord>, mut file: W) {
+        println!("Записываем Транзакции в bin-файл...");
+        match write_csv(transactions, &mut file) {
+            Ok(_) => (),
             Err(e) => panic!("{}", e)
         }
     }

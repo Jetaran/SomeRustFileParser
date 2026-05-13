@@ -54,7 +54,7 @@ fn parse_bin_record<R: Read>(mut reader: R) -> Result<Option<TransactionRecord>,
     match reader.read_exact(&mut magic) {
         Ok(_) => {},
         Err(e) if e.kind() == ErrorKind::UnexpectedEof => return Ok(None),
-        Err(e) => return Err(ParseError::InvalidLine),
+        Err(_e) => return Err(ParseError::InvalidLine),
     }
     if magic != MAGIC {
         return Err(ParseError::InvalidMagic);

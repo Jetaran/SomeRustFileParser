@@ -69,7 +69,36 @@ impl From<String> for ParseError {
     }
 }
 impl From<IoError> for ParseError {
-    fn from(err: IoError) -> Self {
+    fn from(_err: IoError) -> Self {
         ParseError::InvalidLine
+    }
+}
+
+/// Ошибки записи
+#[derive(Debug)]
+pub enum WriteError {
+    IOError(IoError),
+    CsvFormatError(String),
+    InputError(InputError),
+}
+impl Error for WriteError {}
+impl Display for WriteError {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            WriteError::IOError(err) => {
+                write!(f, "Системная ошибка записи файла {}", err)
+            }
+            WriteError::CsvFormatError(err) => {
+                write!(f, "Ожидался записи в формат CSV {}", err)
+            }
+            WriteError::InputError(err) => {
+                write!(f, "Ошибка ввода {}", err)
+            }
+        }
+    }
+}
+impl From<IoError> for WriteError {
+    fn from(err: IoError) -> Self {
+        Self::IOError(err)
     }
 }
