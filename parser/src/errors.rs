@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::fmt::{Display, Formatter, Result};
+use std::io::Error as IoError;
 use std::num::ParseIntError;
 
 /// Ошибки ввода
@@ -30,6 +31,8 @@ impl Display for InputError {
 #[derive(Debug)]
 pub enum ParseError {
     InvalidLine,
+    InvalidMagic,
+    InvalidDescription,
     ParseIntError(ParseIntError),
     ParseEnumError(String),
 }
@@ -39,6 +42,12 @@ impl Display for ParseError {
         match self {
             ParseError::InvalidLine => {
                 write!(f, "Ошибка парсинга строки")
+            }
+            ParseError::InvalidMagic => {
+                write!(f, "Ожидался MAGIC 'YPBN' в начале записи")
+            }
+            ParseError::InvalidDescription => {
+                write!(f, "Ошибка парсинга описания")
             }
             ParseError::ParseIntError(err) => {
                 write!(f, "Ошибка парсинга целочисленного значения: {}", err)
@@ -57,5 +66,10 @@ impl From<ParseIntError> for ParseError {
 impl From<String> for ParseError {
     fn from(err: String) -> Self {
         ParseError::ParseEnumError(err)
+    }
+}
+impl From<IoError> for ParseError {
+    fn from(err: IoError) -> Self {
+        ParseError::InvalidLine
     }
 }

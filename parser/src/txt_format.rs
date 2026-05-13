@@ -20,7 +20,7 @@ fn parse_map(transaction_map: &HashMap<String, String>) -> Result<TransactionRec
     })
 }
 /// Бьёт входящий контент на строки, проверяет их и собирает вектор транзакций
-pub fn parse_txt_to_transactions<R: Read>(content: R) -> Result<Vec<TransactionRecord>, ParseError> {
+pub(crate) fn parse_txt_to_transactions<R: Read>(content: R) -> Result<Vec<TransactionRecord>, ParseError> {
     let reader = BufReader::new(content);
     let mut counter = "";
     let mut transaction_map: HashMap<String, String> = HashMap::new();

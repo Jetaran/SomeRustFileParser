@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::str::FromStr;
+use crate::bin_format::parse_bin_to_transaction;
 use crate::csv_format::parse_csv_to_transactions;
 use crate::errors::InputError;
 use crate::txt_format::parse_txt_to_transactions;
@@ -15,14 +16,14 @@ const FORMATS: [&str; 3] = ["txt", "csv", "bin" ];
 
 // ENUMS
 
-#[derive(Debug)]
-enum TransactionType {
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub enum TransactionType {
     DEPOSIT,
     WITHDRAWAL,
     TRANSFER,
 }
-#[derive(Debug)]
-enum TransactionStatus {
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub enum TransactionStatus {
     SUCCESS,
     FAILURE,
     PENDING,
@@ -30,22 +31,19 @@ enum TransactionStatus {
 
 // STRUCTS
 
-#[derive(Debug)]
+#[derive(Debug, Hash, Clone, Ord, PartialOrd)]
 pub struct TransactionRecord {
-    tx_id: u64,
-    tx_type: TransactionType,
-    from_user_id: u64,
-    to_user_id: u64,
-    amount: i64,
-    timestamp: u64,
-    status: TransactionStatus,
-    description: String,
+    pub tx_id: u64,
+    pub tx_type: TransactionType,
+    pub from_user_id: u64,
+    pub to_user_id: u64,
+    pub amount: i64,
+    pub timestamp: u64,
+    pub status: TransactionStatus,
+    pub description: String,
 }
 
-pub struct Parser {
-    // TODO Переписать на HashSet
-    transactions: Vec<TransactionRecord>,
-}
+pub struct Parser {}
 
 // TRAITS
 
@@ -54,6 +52,7 @@ impl PartialEq for TransactionRecord {
         self.tx_id == other.tx_id
     }
 }
+impl Eq for TransactionRecord {}
 impl FromStr for TransactionType {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -81,11 +80,10 @@ impl FromStr for TransactionStatus {
 
 impl Parser {
     pub fn new() -> Self {
-        Parser {
-            transactions: Vec::new(),
-        }
+        Parser {}
     }
     /// Пользовательский интерфейс со всеми проверками на ошибки типа InputError
+    /// TODO Переписать тип возврата на HashSet
     pub fn parse_file(self, file_name: String) -> Result<Vec<TransactionRecord>, InputError> {
         let file_content = File::open(&file_name);
         match file_content {
@@ -94,7 +92,7 @@ impl Parser {
                 if let [_, format] = file_name_vec.as_slice() {
                     match format {
                         &"txt" => Ok(self.parse_transactions_from_txt(_file)),
-                        &"scv" => Ok(self.parse_transactions_from_csv(_file)),
+                        &"csv" => Ok(self.parse_transactions_from_csv(_file)),
                         &"bin" => Ok(self.parse_transactions_from_bin(_file)),
                         _ => Err(InputError::InvalidFormat { expected: FORMATS.join(", ") }),
                     }
@@ -107,21 +105,25 @@ impl Parser {
     }
 
     fn parse_transactions_from_txt(self, file: File) -> Vec<TransactionRecord> {
+        println!("Парсим Транзакции из txt-файла...");
         match parse_txt_to_transactions(file) {
             Ok(transactions) => transactions,
             Err(e) => panic!("{}", e)
         }
     }
     fn parse_transactions_from_csv(self, file: File) -> Vec<TransactionRecord> {
+        println!("Парсим Транзакции из csv-файла...");
         match parse_csv_to_transactions(file) {
             Ok(transactions) => transactions,
             Err(e) => panic!("{}", e)
         }
     }
     fn parse_transactions_from_bin(self, file: File) -> Vec<TransactionRecord> {
-        // TODO Добавить обращение к форматтерам
-        println!("Parsing transactions from bin file {:?}", file);
-        self.transactions
+        println!("Парсим Транзакции из bin-файла...");
+        match parse_bin_to_transaction(file) {
+            Ok(transactions) => transactions,
+            Err(e) => panic!("{}", e)
+        }
     }
 }
 

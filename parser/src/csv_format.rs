@@ -19,7 +19,7 @@ fn parse_line(line: String) -> Result<TransactionRecord, ParseError> {
 }
 
 /// Бьёт входящий контент на строки, проверяет их и собирает вектор транзакций
-pub fn parse_csv_to_transactions<R: Read>(content: R) -> Result<Vec<TransactionRecord>, ParseError> {
+pub(crate) fn parse_csv_to_transactions<R: Read>(content: R) -> Result<Vec<TransactionRecord>, ParseError> {
     let reader = BufReader::new(content);
     let mut transaction_records = Vec::new();
     for line in reader.lines() {
