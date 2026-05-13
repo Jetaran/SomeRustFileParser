@@ -25,9 +25,10 @@ let transactions = parser.parse_file(file_path)
 #### 1. Comparer
 
 Сравнивает парами файлы поддерживаемых форматов и выводит различия в формате списка уникальных идентификаторов транзакций.
+Принимает чётное количество аргументов.
 
 ##### Запуск:
 
 ```bash
-comparer --file1 file1_path --file2 file2_path --file3 file3_path --file4 file4_path
+comparer --file1 file1_path --file2 <file2_path> ... --fileN <fileN_path> --fileN+1 <fileN+1_path>
 ```

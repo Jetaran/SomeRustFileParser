@@ -3,6 +3,7 @@ use std::{env, io};
 use std::collections::BTreeSet;
 use std::io::Write;
 
+/// Сравнивает два вектора с транзакциями, возвращает массив с сетом идентификаторов различий
 fn compare_vecs(left: &Vec<TransactionRecord>, right: &Vec<TransactionRecord>) -> [BTreeSet<u64>;2] {
     let set_left: BTreeSet<_> = left.into_iter().collect();
     let set_right: BTreeSet<_> = right.into_iter().collect();
@@ -41,6 +42,8 @@ fn main() {
                 } else {
                     println!("В правом файле отсутствует {} Транзакций: {:?}", &right_ids.len(), &right_ids);
                 }
+                left.clear();
+                right.clear();
             }
         }
         stdout.flush().unwrap();
