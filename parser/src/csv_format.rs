@@ -41,6 +41,7 @@ pub(crate) fn parse_csv_to_transactions<R: Read>(content: R) -> Result<Vec<Trans
 // WRITE
 
 pub(crate) fn write_csv<W: Write>(transactions: Vec<TransactionRecord>, writer: &mut W) -> Result<(), WriteError> {
+    writeln!(writer, "{}", "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION")?;
     for transaction in transactions {
         writeln!(
             writer,
@@ -149,6 +150,7 @@ mod tests {
     #[test]
     fn write_parsed_files_to_csv_success() {
         let fake_file = concat!(
+        "TX_ID,TX_TYPE,FROM_USER_ID,TO_USER_ID,AMOUNT,TIMESTAMP,STATUS,DESCRIPTION", "\n",
         "1000000000000009,DEPOSIT,0,9223372036854775807,1000,1633037400000,FAILURE,", r#""Record number 10""#, "\n",
         "1000000000000994,TRANSFER,9223372036854775807,9223372036854775807,99500,1633096500000,PENDING,", r#""Record number 995""#, "\n"
         );

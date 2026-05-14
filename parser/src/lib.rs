@@ -2,10 +2,10 @@ use std::fmt::Display;
 use std::fs::File;
 use std::io::{BufWriter, Read, Write};
 use std::str::FromStr;
-use crate::bin_format::parse_bin_to_transaction;
+use crate::bin_format::{parse_bin_to_transaction, write_bin};
 use crate::csv_format::{parse_csv_to_transactions, write_csv};
 use crate::errors::{InputError, WriteError};
-use crate::txt_format::parse_txt_to_transactions;
+use crate::txt_format::{parse_txt_to_transactions, write_txt};
 
 mod errors;
 pub mod bin_format;
@@ -102,7 +102,7 @@ impl Parser {
     pub fn new() -> Self {
         Parser {}
     }
-    /// Пользовательский интерфейс со всеми проверками на ошибки типа InputError
+    /// Пользовательский интерфейс чтения со всеми проверками на ошибки типа InputError
     /// TODO Переписать тип возврата на HashSet
     pub fn parse_file(self, file_name: String) -> Result<Vec<TransactionRecord>, InputError> {
         let file_content = File::open(&file_name);
@@ -145,6 +145,7 @@ impl Parser {
             Err(e) => panic!("{}", e)
         }
     }
+    // Пользовательский интерфейс записи со всеми проверками на ошибки типа InputError
     pub fn write_to_file(self, output_file_name: &str, transactions: Vec<TransactionRecord>) -> Result<(), WriteError> {
         let file = File::create(output_file_name)?;
         let writer: Result<_, WriteError> = Ok(BufWriter::new(file));
@@ -168,7 +169,7 @@ impl Parser {
     }
     fn write_transactions_to_txt<W: Write>(self, transactions: Vec<TransactionRecord>, mut file: W) {
         println!("Записываем Транзакции в txt-файл...");
-        match write_csv(transactions, &mut file) {
+        match write_txt(transactions, &mut file) {
             Ok(_) => (),
             Err(e) => panic!("{}", e)
         }
@@ -182,7 +183,7 @@ impl Parser {
     }
     fn write_transactions_to_bin<W: Write>(self, transactions: Vec<TransactionRecord>, mut file: W) {
         println!("Записываем Транзакции в bin-файл...");
-        match write_csv(transactions, &mut file) {
+        match write_bin(transactions, &mut file) {
             Ok(_) => (),
             Err(e) => panic!("{}", e)
         }

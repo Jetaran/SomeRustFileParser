@@ -3,7 +3,7 @@ use std::{env, io};
 use std::collections::BTreeSet;
 use std::io::Write;
 
-/// Сравнивает два вектора с транзакциями, возвращает массив с сетом идентификаторов различий
+/// Сравнивает два вектора с транзакциями, возвращает массив с сетами идентификаторов различий
 fn compare_vecs(left: &Vec<TransactionRecord>, right: &Vec<TransactionRecord>) -> [BTreeSet<u64>;2] {
     let set_left: BTreeSet<_> = left.into_iter().collect();
     let set_right: BTreeSet<_> = right.into_iter().collect();
@@ -18,7 +18,7 @@ fn compare_vecs(left: &Vec<TransactionRecord>, right: &Vec<TransactionRecord>) -
 
 fn main() {
     let mut stdout = io::stdout();
-
+    // первым в аргументы передаётся путь утилиты
     let mut args = env::args().skip(1);
     let mut left = Vec::new();
     let mut right: Vec<TransactionRecord>;

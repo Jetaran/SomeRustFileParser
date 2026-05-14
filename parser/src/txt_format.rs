@@ -1,7 +1,9 @@
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Read};
-use crate::errors::ParseError;
+use std::io::{BufRead, BufReader, Read, Write};
+use crate::errors::{ParseError, WriteError};
 use crate::TransactionRecord;
+
+// READ
 
 /// Парсит txt-талицу и собирает структуру через замыкание-адаптер (аналог питонячей yield-лямбды)
 fn parse_map(transaction_map: &HashMap<String, String>) -> Result<TransactionRecord, ParseError> {
@@ -55,9 +57,42 @@ pub(crate) fn parse_txt_to_transactions<R: Read>(content: R) -> Result<Vec<Trans
     Ok(transactions)
 }
 
+// WRITE
+
+pub(crate) fn write_txt<W: Write>(transactions: Vec<TransactionRecord>, writer: &mut W) -> Result<(), WriteError> {
+    let mut counter = 1;
+    for transaction in transactions {
+        writeln!(
+            writer,
+            concat!(
+            "# Record {} ({})", "\n",
+            "TX_ID: {}", "\n",
+            "TX_TYPE: {}", "\n",
+            "FROM_USER_ID: {}", "\n",
+            "TO_USER_ID: {}", "\n",
+            "AMOUNT: {}", "\n",
+            "TIMESTAMP: {}", "\n",
+            "STATUS: {}", "\n",
+            "DESCRIPTION: {}", "\n"),
+            counter,
+            transaction.tx_type,
+            transaction.tx_id,
+            transaction.tx_type,
+            transaction.from_user_id,
+            transaction.to_user_id,
+            transaction.amount,
+            transaction.timestamp,
+            transaction.status,
+            transaction.description
+        )?;
+        counter += 1;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use std::io::{BufWriter, Cursor};
     use crate::{TransactionStatus, TransactionType};
     use super::*;
 
@@ -168,5 +203,28 @@ mod tests {
             Err(other) => panic!("Ожидалась InvalidLine, получено: {:?}", other),
             Ok(_) => panic!("Ожидалась ошибка, но парсинг прошёл успешно"),
         }
+    }
+    #[test]
+    fn write_parsed_files_to_txt_success() {
+        let fake_file = concat!(
+        "# Record 1 (TRANSFER)", "\n", "TX_ID: 1000000000000445", "\n", "TX_TYPE: TRANSFER",
+        "\n", "FROM_USER_ID: 9223372036854775807", "\n", "TO_USER_ID: 9173880151496138473", "\n", "AMOUNT: 44600",
+        "\n", "TIMESTAMP: 1633063560000", "\n", "STATUS: PENDING", "\n", r#"DESCRIPTION: "Record number 446""#, "\n",
+        "\n", "# Record 2 (WITHDRAWAL)", "\n", "TX_ID: 1000000000000446", "\n", "TX_TYPE: WITHDRAWAL",
+        "\n", "FROM_USER_ID: 6899145982714634482", "\n", "TO_USER_ID: 0", "\n", "AMOUNT: 44700",
+        "\n", "TIMESTAMP: 1633063620000", "\n", "STATUS: SUCCESS", "\n", r#"DESCRIPTION: "Record number 447""#, "\n", "\n",
+        );
+        let reader = Cursor::new(fake_file.as_bytes());
+        let records = parse_txt_to_transactions(reader).unwrap();
+        let mut buffer = Vec::new();
+        // writer заимствует буфер, но дальше уже не нужен
+        {
+            let mut writer = BufWriter::new(&mut buffer);
+            write_txt(records, &mut writer).unwrap();
+            writer.flush().unwrap();
+        }
+        let output = String::from_utf8(buffer).unwrap();
+
+        assert_eq!(output, fake_file);
     }
 }

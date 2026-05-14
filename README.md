@@ -10,15 +10,30 @@
 
 ### Основной интерфейс
 
-Структура Parser, возвращающая вектор с записями транзакций.
+Структура Parser, в которой есть метод для чтения и записи транзакций.
+
+Метод Parser::parse_file принимает файл и возвращает вектор с записями транзакций.
+
+Метод Parser::write_to_file записывает вектор с записями транзакций в указанный файл.
+
+Имена файлов с разрешениями указываются явно, методы автоматически определяют необходимые алгоритмы.
 
 Запись транзакции представлены в виде структуры TransactionRecord.
 
 ### Использование
 
+Чтение:
+
 ```rust
 let parser = Parser::new()
 let transactions = parser.parse_file(file_path)
+```
+
+Запись:
+
+```rust
+let parser = Parser::new()
+let transactions = parser.write_to_file(file_path, transactions)
 ```
 ### Утилиты
 
@@ -30,5 +45,15 @@ let transactions = parser.parse_file(file_path)
 ##### Запуск:
 
 ```bash
-comparer --file1 file1_path --file2 <file2_path> ... --fileN <fileN_path> --fileN+1 <fileN+1_path>
+comparer --file1 <file1_path> --file2 <file2_path> ... --fileN <fileN_path> --fileN+1 <fileN+1_path>
+```
+
+#### 2. Converter
+
+Читает транзакции из файла в поддерживаемом формате и записывает их в файл другого поддерживаемого формата.
+
+##### Запуск:
+
+```bash
+converter --input <input_file_path> --output <output_file_path>
 ```
