@@ -30,10 +30,14 @@ fn main() {
         };
         if let Some(file_name) = file_name {
             if left.is_empty() {
-                left = Parser::new().parse_file(file_name).unwrap();
-                continue;
+                if let Ok(_left) = Parser::new().parse_file(file_name) {
+                    left = _left;
+                    continue;
+                } else { println!("Ошибка чтения файла слева"); break; }
             } else {
-                right = Parser::new().parse_file(file_name).unwrap();
+                if let Ok(_right) = Parser::new().parse_file(file_name) {
+                    right = _right;
+                } else { println!("Ошибка чтения файла справа"); break; }
                 let [left_ids, right_ids] = compare_vecs(&left, &right);
                 if left_ids.is_empty() && right_ids.is_empty() {
                     println!("Транзакции в обоих файлах идентичны")
