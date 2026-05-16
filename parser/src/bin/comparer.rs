@@ -33,11 +33,11 @@ fn main() {
                 if let Ok(_left) = Parser::new().parse_file(file_name) {
                     left = _left;
                     continue;
-                } else { println!("Ошибка чтения файла слева"); break; }
+                } else { eprintln!("Ошибка чтения файла слева"); break; }
             } else {
                 if let Ok(_right) = Parser::new().parse_file(file_name) {
                     right = _right;
-                } else { println!("Ошибка чтения файла справа"); break; }
+                } else { eprintln!("Ошибка чтения файла справа"); break; }
                 let [left_ids, right_ids] = compare_vecs(&left, &right);
                 if left_ids.is_empty() && right_ids.is_empty() {
                     println!("Транзакции в обоих файлах идентичны")
@@ -50,6 +50,9 @@ fn main() {
                 right.clear();
             }
         }
-        stdout.flush().unwrap();
+        if let Err(e) = stdout.flush() {
+            eprintln!("Ошибка вывода: {}", e);
+            std::process::exit(1);
+        };
     }
 }

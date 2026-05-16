@@ -16,7 +16,7 @@ fn main()  {
                 let transactions_from_file = parser.parse_file(input_file);
                 match transactions_from_file {
                     Ok(mut transactions_from_file) => { transactions.append(&mut transactions_from_file)}
-                    Err(err) => { println!("Чтение файла не удалось {}", err); break }
+                    Err(err) => { eprintln!("Чтение файла не удалось {}", err); break }
                 }
             },
             arg if arg.starts_with("--output") => {
@@ -25,12 +25,15 @@ fn main()  {
                 let result = parser.write_to_file(&*output_file, transactions.clone());
                 match result {
                     Ok(_) => { println!("Запись прошла успешно, {} транзакций записано в файл {}", transactions.len(), output_file); }
-                    Err(err) => { println!("Запись файла не удалась {}", err); break }
+                    Err(err) => { eprintln!("Запись файла не удалась {}", err); break }
                 }
 
             },
             _ => ()
         };
     }
-    stdout.flush().unwrap();
+    if let Err(e) = stdout.flush() {
+        eprintln!("Ошибка вывода: {}", e);
+        std::process::exit(1);
+    };
 }
